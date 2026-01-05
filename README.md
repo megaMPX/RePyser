@@ -8,7 +8,7 @@
 
 1.  Клонируйте репозиторий:
     ```bash
-    git clone <URL репозитория>
+    git clone https://github.com/megaMPX/RePyser.git
     ```
 2.  Создайте и активируйте виртуальное окружение:
     ```bash
