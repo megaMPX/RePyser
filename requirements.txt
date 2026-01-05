@@ -1,0 +1,4 @@
+pyqtdarktheme
+PyQt6
+pyinstxtractor-ng
+uncompyle6
