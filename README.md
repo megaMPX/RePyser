@@ -9,10 +9,10 @@
 ## Установка
 
  Клонируйте репозиторий:
-    ```bash
+  ```bash
     git clone https://github.com/megaMPX/RePyser.git
     cd RePyser
-    ```
+  ```
 
 
 ## Запуск
