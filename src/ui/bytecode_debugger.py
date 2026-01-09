@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QPushButton
 )
 from .code_editor import CodeEditor
+from .syntax_highlighter import PythonHighlighter
 
 class BytecodeVM:
     def __init__(self, codeobj):
@@ -51,6 +52,7 @@ class BytecodeDebugWindow(QDialog):
 
         self.disasm = CodeEditor()
         self.disasm.setReadOnly(True)
+        self.disasm_hl = PythonHighlighter(self.disasm.document())
 
         lines = [
             f"{ins.offset:04x} {ins.opname:<20} {ins.argrepr}"

@@ -3,33 +3,48 @@
 Это инструмент для реверс-инжиниринга Python файлов (`.pyc`).
 
 ## Требования
-Python 3.10
+- Docker
+- Linux с X11
 
 ## Установка
 
-1.  Клонируйте репозиторий:
+ Клонируйте репозиторий:
     ```bash
     git clone https://github.com/megaMPX/RePyser.git
+    cd RePyser
     ```
-2.  Создайте и активируйте виртуальное окружение:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate
-    ```
-3.  Запустите скрипт установки:
-    ```bash
-    ./install.sh
-    ```
-4.  Загрузите скрипт `pyinstxtractor.py`:
-    ```bash
-    wget https://raw.githubusercontent.com/extremecoders-re/pyinstxtractor/master/pyinstxtractor.py
-    ```
+
 
 ## Запуск
 
 
 ```bash
-python main.py
+./run.sh
 ```
+
+## Пересборка Docker-образа
+
+```bash
+./rebuild.sh
+```
+
+## Использование
+### Анализируемые файлы
+
+Поместите файлы для анализа (например, .pyc, .exe или любые бинарные файлы) в каталог:
+```bash
+samples/
+```
+
+Каталог монтируется в контейнер в режиме read-only, что исключает модификацию исходных данных.
+
+### Экспорт отчётов
+
+При сохранении отчётов указывайте путь:
+```bash
+/reports
+```
+
+Файлы будут сохранены в каталог reports/ на хост-системе.
 
 

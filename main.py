@@ -19,15 +19,15 @@ from PyQt6.QtCore import Qt
 from src.file_utils import classify_pyc
 from src.pyinstaller_utils import is_pyinstaller_bundle
 from src.ui.code_editor import CodeEditor
-from src.ui.syntax_highlighter import PythonHighlighter
+from src.ui.syntax_highlighter import PythonHighlighter, ReportHighlighter
 from src.ui.bytecode_debugger import BytecodeDebugWindow
-from src.reporting import collect_suspicious, export_html, export_txt
+from src.reporting import collect_suspicious, format_report_text
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Python RE Tool")
+        self.setWindowTitle("RePyser")
         self.resize(1600, 900)
         self.setup_ui()
         self.open_file()
@@ -36,10 +36,10 @@ class MainWindow(QMainWindow):
         toolbar = QToolBar()
         self.addToolBar(toolbar)
 
-        dbg = toolbar.addAction("🐞 Bytecode Debug")
+        dbg = toolbar.addAction("Bytecode Debug")
         dbg.triggered.connect(self.open_debugger)
 
-        rep = toolbar.addAction("📄 Export report")
+        rep = toolbar.addAction("Export report")
         rep.triggered.connect(self.export_report)
 
         central = QWidget()
@@ -55,13 +55,16 @@ class MainWindow(QMainWindow):
 
         self.decomp = CodeEditor()
         self.disasm = CodeEditor()
+        self.report = CodeEditor()
 
         self.decomp_hl = PythonHighlighter(self.decomp.document())
         self.disasm_hl = PythonHighlighter(self.disasm.document())
+        self.report_hl = ReportHighlighter(self.report.document())
 
         right = QTabWidget()
         right.addTab(self.decomp, "Decompilation")
         right.addTab(self.disasm, "Disassembly")
+        right.addTab(self.report, "Report")
 
         splitter = QSplitter()
         splitter.addWidget(left)
@@ -79,8 +82,12 @@ class MainWindow(QMainWindow):
 
     def open_file(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select file", "", "Python bytecode (*.pyc);;Executable (*)"
+            self,
+            "Select file",
+            "/samples",
+            "All files (*);;Python bytecode (*.pyc);;Executables (*.exe)"
         )
+
         if not path:
             return
 
@@ -131,32 +138,50 @@ class MainWindow(QMainWindow):
             capture_output=True,
             text=True
         )
-        self.decomp.setPlainText(proc.stdout)
+        code = proc.stdout.splitlines()
+
+        while code and code[0].startswith("#"):
+            code.pop(0)
+
+        self.decomp.setPlainText("\n".join(code))
+
+        self.update_report()
+
+    def update_report(self):
+        report = collect_suspicious(self.current_code, self.current_file_path)
+        if not report:
+            self._last_report = []
+            self.report.setPlainText("No suspicious activity found")
+            return
+
+        self._last_report = report
+        self.report.setPlainText(self.format_report(report))
+
+    def format_report(self, report):
+        return format_report_text(report)
 
     def export_report(self):
-        if not hasattr(self, "current_code"):
+        if not hasattr(self, "current_code") or not hasattr(self, "_last_report"):
             QMessageBox.warning(self, "Report", "No file loaded")
             return
 
-        report = collect_suspicious(self.current_code, self.current_file_path)
-
-        if not report:
+        if not self._last_report:
             QMessageBox.information(self, "Report", "No suspicious activity")
             return
+
+        report_text = format_report_text(self._last_report)
 
         out, _ = QFileDialog.getSaveFileName(
             self,
             "Save report",
-            "",
+            "/reports",
             "Text (*.txt)"
         )
         if not out:
             return
 
-        if out.endswith(".html"):
-            export_html(report, out)
-        else:
-            export_txt(report, out)
+        with open(out, "w") as f:
+            f.write(report_text)
 
         QMessageBox.information(self, "Report", "Report saved")
 
