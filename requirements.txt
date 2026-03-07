@@ -1,3 +1,4 @@
 pyqtdarktheme
 PyQt6
 pyinstxtractor-ng
+pydot

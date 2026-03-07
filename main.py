@@ -21,6 +21,7 @@ from src.pyinstaller_utils import is_pyinstaller_bundle
 from src.ui.code_editor import CodeEditor
 from src.ui.syntax_highlighter import PythonHighlighter, ReportHighlighter
 from src.ui.bytecode_debugger import BytecodeDebugWindow
+from src.ui.graph_view import GraphView
 from src.reporting import collect_suspicious, format_report_text
 
 
@@ -56,6 +57,7 @@ class MainWindow(QMainWindow):
         self.decomp = CodeEditor()
         self.disasm = CodeEditor()
         self.report = CodeEditor()
+        self.graph = GraphView()
 
         self.decomp_hl = PythonHighlighter(self.decomp.document())
         self.disasm_hl = PythonHighlighter(self.disasm.document())
@@ -64,6 +66,7 @@ class MainWindow(QMainWindow):
         right = QTabWidget()
         right.addTab(self.decomp, "Decompilation")
         right.addTab(self.disasm, "Disassembly")
+        right.addTab(self.graph, "Graph")
         right.addTab(self.report, "Report")
 
         splitter = QSplitter()
@@ -146,6 +149,7 @@ class MainWindow(QMainWindow):
         self.decomp.setPlainText("\n".join(code))
 
         self.update_report()
+        self.graph.set_code(self.current_code)
 
     def update_report(self):
         report = collect_suspicious(self.current_code, self.current_file_path)
