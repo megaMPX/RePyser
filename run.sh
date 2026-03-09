@@ -30,9 +30,9 @@ fi
 
 docker run --rm \
   --read-only \
-  --tmpfs /tmp \
-  --tmpfs /run \
-  --tmpfs /home/sandbox/.cache \
+  --tmpfs /tmp:mode=1777 \
+  --tmpfs /run:mode=1777 \
+  --tmpfs /home/sandbox/.cache:mode=1777 \
   --network none \
   --cap-drop ALL \
   --pids-limit 128 \
