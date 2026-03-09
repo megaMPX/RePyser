@@ -34,13 +34,13 @@ class GraphView(QWidget):
         try:
             png_data = build_cfg_png(self._current_code, scale=self._zoom)
         except Exception as exc:
-            self._label.setText(f"Не удалось построить график:\n{exc}")
+            self._label.setText(f"Couldn't build a graph:\n{exc}")
             self._label.setPixmap(QPixmap())
             return
 
         pixmap = QPixmap()
         if not pixmap.loadFromData(png_data):
-            self._label.setText("Ошибка потсроения графа")
+            self._label.setText("Graph construction error")
             return
 
         self._label.setText("")
