@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import marshal
 import dis
+import shutil
 
 import qdarktheme
 from PyQt6.QtWidgets import (
@@ -28,6 +29,7 @@ from src.reporting import collect_suspicious, format_report_text
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.temp_dir = None
         self.setWindowTitle("RePyser")
         self.resize(1600, 900)
         self.setup_ui()
@@ -94,12 +96,28 @@ class MainWindow(QMainWindow):
         if not path:
             return
 
+        if self.temp_dir:
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+            self.temp_dir = None
+
         self.files.clear()
 
         if path.endswith(".pyc"):
-            self.add_file(path)
+            self.temp_dir = self.create_temp_dir(path)
+            new_path = os.path.join(self.temp_dir, os.path.basename(path))
+            shutil.copy2(path, new_path)
+            self.add_file(new_path)
         elif is_pyinstaller_bundle(path):
             self.extract_pyinstaller(path)
+
+    def create_temp_dir(self, path):
+        parent = os.path.dirname(path)
+        if os.access(parent, os.W_OK):
+            try:
+                return tempfile.mkdtemp(prefix="pyi_", dir=parent)
+            except Exception:
+                pass
+        return tempfile.mkdtemp(prefix="pyi_")
 
     def add_file(self, path):
         item = QTreeWidgetItem([os.path.basename(path)])
@@ -108,18 +126,18 @@ class MainWindow(QMainWindow):
         self.files.addTopLevelItem(item)
 
     def extract_pyinstaller(self, path):
-        temp = tempfile.mkdtemp(prefix="pyi_")
+        self.temp_dir = self.create_temp_dir(path)
         pyinst = os.path.join(os.path.dirname(__file__), "pyinstxtractor.py")
-        subprocess.run([sys.executable, pyinst, path], cwd=temp)
+        subprocess.run([sys.executable, pyinst, path], cwd=self.temp_dir)
 
-        extracted = next(d for d in os.listdir(temp) if d.endswith("_extracted"))
+        extracted = next(d for d in os.listdir(self.temp_dir) if d.endswith("_extracted"))
         root = QTreeWidgetItem(self.files, [os.path.basename(path)])
 
-        for r, _, files in os.walk(os.path.join(temp, extracted)):
+        for r, _, files in os.walk(os.path.join(self.temp_dir, extracted)):
             for f in files:
                 if f.endswith(".pyc"):
                     full = os.path.join(r, f)
-                    item = QTreeWidgetItem(root, [os.path.relpath(full, temp)])
+                    item = QTreeWidgetItem(root, [os.path.relpath(full, self.temp_dir)])
                     item.setData(0, Qt.ItemDataRole.UserRole, full)
                     item.setForeground(0, classify_pyc(full))
 
@@ -189,6 +207,10 @@ class MainWindow(QMainWindow):
 
         QMessageBox.information(self, "Report", "Report saved")
 
+    def closeEvent(self, event):
+        if self.temp_dir:
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+        event.accept()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

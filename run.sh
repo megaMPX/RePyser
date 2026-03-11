@@ -39,6 +39,6 @@ docker run --rm \
   --memory 1g \
   -e DISPLAY="$DISPLAY" \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
-  -v "$SAMPLES":/samples:ro \
+  -v "$SAMPLES":/samples:rw \
   -v "$REPORTS":/reports:rw \
   "$IMAGE"
